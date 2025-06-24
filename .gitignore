@@ -1,0 +1,24 @@
+.DS_Store
+__pycache__/
+.vscode/
+.log
+~$*
+*.tmp
+
+# jspsych builder files
+.jspsych-builder/
+
+# Dependencies
+node_modules/
+
+# Packaged project files
+packaged/
+
+# Word temporary
+# ~$*.doc*
+
+# Excel temporary
+# ~$*.xls*
+
+# PowerPoint temporary
+# ~$*.ppt*
