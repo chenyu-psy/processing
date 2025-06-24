@@ -4,11 +4,10 @@ import { varSystem } from "../settings";
 
 export function createBlockInstruction(
   question: string,
-  paradigm: string,
   condition: string,
 ) {
 
-  const imgPath = `assets/images/instruction/${paradigm}-${condition}-${question}.jpeg`;
+  const imgPath = `assets/images/instruction/${condition}-${question}.jpeg`;
 
   const block_instr_screen = {
     type: htmlButtonResponse,

@@ -14,7 +14,6 @@ import { generateColors } from "./trialStim";
 import { samplePair } from "../task-fun/samplePair";
 import { returnImages } from "../task-fun/returnImages";
 import { drawImageObject } from "./elements";
-import { newPosArray } from "../task-fun/newPosArray";
 
 // Global variables
 import { jsPsych } from "../jsp";
@@ -25,7 +24,6 @@ let { OBJECTS, TIMING, COLORS, DESIGN } = expInfo;
 import { trial_start_screen } from "../instructions/InstrTrial";
 
 class createTrialBody {
-  paradigm: string;
   length: number;
   condition: string;
   question: string;
@@ -47,16 +45,14 @@ class createTrialBody {
   markers: string[];
   seqColorList: string[];
 
-  constructor(paradigm, condition, question, blockID, trialID) {
+  constructor(condition, question, blockID, trialID) {
     // trial information
-    this.paradigm = paradigm;
     this.condition = condition;
     this.question = question;
     this.blockID = blockID;
     this.trialID = trialID;
     this.trialIndex = "id" + Math.random().toString(16).slice(2);
-    this.length =
-      paradigm === "sequential" ? DESIGN.SETSIZE * 2 : DESIGN.SETSIZE;
+    this.length = DESIGN.SETSIZE;
     this.retrievalInfo = {};
 
     // center of the canvas
@@ -72,36 +68,8 @@ class createTrialBody {
     );
     random.shuffle(this.colorList);
 
-    // mark memoranda and distractors (for the sequential paradigm)
-    this.markers = Array(DESIGN.SETSIZE)
-      .fill(["memorandum", "distractor"])
-      .flat();
-    random.shuffle(this.markers);
-
-    // randomize the distractor colors
-    // this.distractorColorList = newPosArray(this.colorList);
-    this.distractorColorList = this.colorList;
-    if (this.paradigm === "sequential")
-      random.shuffle(this.distractorColorList); // randomize the distractor colors for the sequential paradigm
-
-    // generate new color list for sequential paradigm
-    if (this.paradigm === "sequential") {
-      this.seqColorList = [];
-      let iM = 0;
-      let iD = 0;
-      this.markers.forEach((marker) => {
-        if (marker === "memorandum") {
-          this.seqColorList.push(this.colorList[iM]);
-          iM++;
-        } else {
-          this.seqColorList.push(this.distractorColorList[iD]);
-          iD++;
-        }
-      });
-    }
-
     // define fixObject
-    let fixObject = this.paradigm === "sequential" ? true : false;
+    let fixObject = true;
 
     // cue list
     this.cueList = random.sample(["left", "right"], this.length, true);
@@ -119,7 +87,6 @@ class createTrialBody {
       );
       this.objectObj[i] = pair;
 
-
       // correct judgement
       if (this.question === "smaller") {
         this.correctJudge[i] =
@@ -133,66 +100,32 @@ class createTrialBody {
             : "right";
       }
 
+      // check if the left object is the control object
+      let isLeftFix = this.objectObj[i].left.image === OBJECTS.CONTROL_OBJECT;
+
       // cue color
-      let cueColor = this.paradigm === "sequential" ? this.seqColorList[i] : this.colorList[i];
+      let cueColor = this.colorList[i];
 
-      // assign colors and correct the cue list
-      if (this.paradigm === "sequential") {
+      // assign white color to the control object
+      this.objectObj[i].left.color = isLeftFix ? "#FFFFFF" : cueColor;
+      this.objectObj[i].right.color = isLeftFix ? cueColor : "#FFFFFF";
 
-        // check if the object is a memorandum or a distr
-        let isMemorandum = this.markers[i] === "memorandum";
+      // create a new object in the retrieval info
+      this.retrievalInfo[cueColor] = {};
+      // assign the object
+      this.retrievalInfo[cueColor].object = isLeftFix
+        ? this.objectObj[i].right.image
+        : this.objectObj[i].left.image;
+      // assign the cue
+      this.retrievalInfo[cueColor].cue = isLeftFix
+        ? "right"
+        : "left";
+      // assign the judge
+      this.retrievalInfo[cueColor].judge = this.correctJudge[i];
+      // assign the congruency
+      this.retrievalInfo[cueColor].congruency =
+        this.correctJudge[i] === this.cueList[i] ? "congruent" : "incongruent";
 
-        // check if the left object is the control object
-        let isLeftFix = this.objectObj[i].left.image === OBJECTS.CONTROL_OBJECT;
-
-        // assign white color to the control object
-        this.objectObj[i].left.color = isLeftFix ? "#FFFFFF" : cueColor;
-        this.objectObj[i].right.color = isLeftFix ? cueColor : "#FFFFFF";
-
-        // correct the cue list
-        this.cueList[i] = isLeftFix !== isMemorandum ? "left" : "right";
-
-        // save to the retrieval info
-        if (isMemorandum) {
-          // create a new object in the retrieval info
-          this.retrievalInfo[cueColor] = {}
-          // assign the object
-          this.retrievalInfo[cueColor].object = isLeftFix ? this.objectObj[i].right.image : this.objectObj[i].left.image;
-          // assign the cue
-          this.retrievalInfo[cueColor].cue = this.cueList[i];
-          // assign the judge
-          this.retrievalInfo[cueColor].judge = this.correctJudge[i];
-          // assign the congruency
-          this.retrievalInfo[cueColor].congruency = this.correctJudge[i] === this.cueList[i] ? "congruent" : "incongruent";
-        };
-
-        // if the paradigm is concurrent
-      } else if (this.paradigm === "concurrent") {
-        
-        // create a new object in the retrieval info
-        this.retrievalInfo[cueColor] = {};
-
-        let isCueLeft = this.cueList[i] === "left";
-
-        // assign colors
-        this.objectObj[i].left.color = isCueLeft
-          ? cueColor
-          : this.distractorColorList[i];
-        this.objectObj[i].right.color = isCueLeft
-          ? this.distractorColorList[i]
-          : cueColor;
-
-        // save to the retrieval info
-        this.retrievalInfo[cueColor].object = isCueLeft
-          ? this.objectObj[i].left.image
-          : this.objectObj[i].right.image;
-        this.retrievalInfo[cueColor].cue = this.cueList[i];
-        this.retrievalInfo[cueColor].judge = this.correctJudge[i];
-        this.retrievalInfo[cueColor].congruency =
-          this.correctJudge[i] === this.cueList[i]
-            ? "congruent"
-            : "incongruent";
-      }
 
       // assign positions
       this.objectObj[i].left.position = [this.canW * 0.38, this.canH / 2];
@@ -208,7 +141,7 @@ class createTrialBody {
     }
 
     // random select six not presented objects
-    let nNPL = 6;
+    let nNPL = 12 - this.length; // number of not presented objects
     this.responseList = random.sample(
       Object.keys(OBJECTS.POOL).filter(
         (image) => image !== OBJECTS.CONTROL_OBJECT
@@ -247,7 +180,7 @@ class createTrialBody {
   displayRetrievalPhase() {}
 
   // display the feedback
-  displayDebriefingPhase(results: string = "memory") {}
+  displayFeedbackPhase(results: string = "memory") {}
 }
 
 /**
@@ -257,12 +190,6 @@ createTrialBody.prototype.displayMemoryPhase = function () {
   let screen_line: any[] = [];
 
   for (let i = 0; i < this.length; i++) {
-    // cue text
-    const cueImage = {
-      obj_type: "image",
-      file: `assets/images/arrows/${this.cueList[i]}.png`,
-      image_width: this.canH * 0.2,
-    };
 
     // empty text
     const emptyText = {
@@ -277,22 +204,14 @@ createTrialBody.prototype.displayMemoryPhase = function () {
       canvas_width: this.canW,
       canvas_height: this.canH,
       background_color: COLORS.BACKGROUND,
-      stimuli: () => {
-        if (this.condition === "pre") {
-          return [cueImage];
-        } else {
-          return [emptyText];
-        }
-      },
+      stimuli: [emptyText],
       trial_duration: TIMING.PRECUE,
       data: {
         screenID: "preStim",
         blockID: this.blockID,
         trialID: this.trialID,
-        paradigm: this.paradigm,
         condition: this.condition,
         question: this.question,
-        cue: this.condition === "pre" ? this.cueList[i] : "null",
       },
     };
 
@@ -321,7 +240,6 @@ createTrialBody.prototype.displayMemoryPhase = function () {
           blockID: this.blockID,
           trialID: this.trialID,
           stepID: i + 1,
-          paradigm: this.paradigm,
           condition: this.condition,
           cue: this.cueList[i],
           leftColor: stepImages.left.color,
@@ -346,7 +264,7 @@ createTrialBody.prototype.displayMemoryPhase = function () {
       };
 
       // create the button html for the current screen
-      let buttonHtmlIndex = `${this.paradigm}${this.condition}${this.blockID}${this.trialID}${i}`;
+      let buttonHtmlIndex = `${this.condition}${this.blockID}${this.trialID}${i}`;
       const buttonHtml = createAlterButtons(
         stepImages.left,
         stepImages.right,
@@ -369,7 +287,6 @@ createTrialBody.prototype.displayMemoryPhase = function () {
           blockID: this.blockID,
           trialID: this.trialID,
           stepID: i + 1,
-          paradigm: this.paradigm,
           condition: this.condition,
           cue: this.cueList[i],
           leftColor: stepImages.left.color,
@@ -404,21 +321,13 @@ createTrialBody.prototype.displayMemoryPhase = function () {
       canvas_width: this.canW,
       canvas_height: this.canH,
       background_color: COLORS.BACKGROUND,
-      stimuli: () => {
-        if (this.condition === "retro") {
-          return [cueImage];
-        } else {
-          return [emptyText];
-        }
-      },
+      stimuli: [emptyText],
       trial_duration: TIMING.PRECUE,
       data: {
         screenID: "retroStim",
         blockID: this.blockID,
         trialID: this.trialID,
-        paradigm: this.paradigm,
-        condition: this.condition,
-        cue: this.condition === "retro" ? this.cueList[i] : "null",
+        condition: this.condition
       },
     };
 
@@ -438,7 +347,7 @@ createTrialBody.prototype.displayRetrievalPhase = function () {
     responseList: this.responseList,
   };
 
-  const retrievalLine: any[] = [];
+  const retrieval_line: any[] = [];
 
   // shuffle the color list
   random.shuffle(this.colorList);
@@ -468,7 +377,7 @@ createTrialBody.prototype.displayRetrievalPhase = function () {
       },
     ];
 
-    const testScreen = {
+    const test_screen = {
       type: Psychophysics,
       canvas_width: this.canW,
       canvas_height: this.canH,
@@ -484,7 +393,6 @@ createTrialBody.prototype.displayRetrievalPhase = function () {
         screenID: "retrieval",
         blockID: this.blockID,
         trialID: this.trialID,
-        paradigm: this.paradigm,
         condition: this.condition,
         color: color,
         correctObject: this.retrievalInfo[color].object,
@@ -498,109 +406,61 @@ createTrialBody.prototype.displayRetrievalPhase = function () {
       },
     };
 
-    retrievalLine.push(testScreen);
+    retrieval_line.push(test_screen);
   }
 
-  return retrievalLine;
+  return retrieval_line;
 };
 
-createTrialBody.prototype.displayDebriefingPhase = function (
-  results: string = "memoryTask"
-) {
-  
+createTrialBody.prototype.displayFeedbackPhase = function () {
 
-  let debriefingScreen: object;
+  // number of test trials
+  let nTest = DESIGN.SETSIZE;
 
-  if (results === "memoryTask") {
+  let debriefingScreen = {
+    type: htmlKeyboardResponse,
+    trial_duration: TIMING.DEBRIEF,
+    stimulus: function () {
+      let accuracy = jsPsych.data
+        .get()
+        .filter({ screenID: "retrieval" })
+        .last(nTest)
+        .filter({ acc: true })
+        .count();
 
-    // number of test trials
-    let nTest = DESIGN.SETSIZE;
+      return `<div class='fb-text'>You correctly recalled ${accuracy} out of ${nTest} objects.</div>`;
+    },
+    choices: "NO_KEYS",
+    data: {
+      screenID: "debrief",
+      expPart: this.expPart,
+      blockID: this.blockID,
+      trialID: this.trialID,
+      condition: this.condition,
+    },
+    on_finish: function (data) {
+      let accuracy = jsPsych.data
+        .get()
+        .filter({ screenID: "retrieval" })
+        .last(nTest)
+        .filter({ acc: true })
+        .count();
 
-    debriefingScreen = {
-      type: htmlKeyboardResponse,
-      trial_duration: TIMING.DEBRIEF,
-      stimulus: function () {
-        let accuracy = jsPsych.data
-          .get()
-          .filter({ screenID: "retrieval" })
-          .last(nTest)
-          .filter({ acc: true })
-          .count();
-
-        return `<div class='fb-text'>You correctly recalled ${accuracy} out of ${nTest} objects.</div>`;
-      },
-      choices: "NO_KEYS",
-      data: {
-        screenID: "debrief",
-        expPart: this.expPart,
-        blockID: this.blockID,
-        trialID: this.trialID,
-        paradigm: this.paradigm,
-        condition: this.condition,
-      },
-      on_finish: function (data) {
-        let accuracy = jsPsych.data
-          .get()
-          .filter({ screenID: "retrieval" })
-          .last(nTest)
-          .filter({ acc: true })
-          .count();
-
-        data.response = accuracy / nTest;
-      },
-    };
-  } else {
-    
-    // number of test trials
-    let nTest = this.length;
-
-    debriefingScreen = {
-      type: htmlKeyboardResponse,
-      trial_duration: TIMING.DEBRIEF,
-      stimulus: function () {
-        let accuracy = jsPsych.data
-          .get()
-          .filter({ screenID: "memory" })
-          .last(nTest)
-          .filter({ acc: true })
-          .count();
-
-        return `<div class='fb-text'>You correctly judged ${accuracy} out of ${nTest} pairs of objects.</div>`;
-      },
-      choices: "NO_KEYS",
-      data: {
-        screenID: "debrief",
-        expPart: this.expPart,
-        blockID: this.blockID,
-        trialID: this.trialID,
-        paradigm: this.paradigm,
-        condition: this.condition,
-      },
-      on_finish: function (data) {
-        let accuracy = jsPsych.data
-          .get()
-          .filter({ screenID: "memory" })
-          .last(nTest)
-          .filter({ acc: true })
-          .count();
-
-        data.response = accuracy / nTest;
-      },
-    };
-  }
+      data.response = accuracy / nTest;
+    },
+  };
 
   return debriefingScreen;
-};
+}
 
+  
 export function createNewTrial(
-  paradigm: string,
   condition: string,
   question: string,
   blockID: number,
   trialID: number
 ) {
   let trialBody = new createTrialBody(
-    paradigm,
     condition,
     question,
     blockID,
@@ -615,37 +475,10 @@ export function createNewTrial(
   let memoryScreen = trialBody.displayMemoryPhase();
   trialLine = trialLine.concat(memoryScreen);
   // retrieval screen
-  let retrievalLine = trialBody.displayRetrievalPhase();
-  trialLine = trialLine.concat(retrievalLine);
+  let retrieval_line = trialBody.displayRetrievalPhase();
+  trialLine = trialLine.concat(retrieval_line);
   // debriefing screen
-  let debriefingScreen = trialBody.displayDebriefingPhase();
-  trialLine.push(debriefingScreen);
-
-  return trialLine;
-}
-
-export function createSizeJudgement(
-  question: string,
-  blockID: number,
-  trialID: number
-) {
-  let trialBody = new createTrialBody(
-    "sequential",
-    "control",
-    question,
-    blockID,
-    trialID
-  );
-
-  let trialLine: any[] = [];
-
-  // start screen
-  trialLine.push(trial_start_screen);
-  // memory screen
-  let memoryScreen = trialBody.displayMemoryPhase();
-  trialLine = trialLine.concat(memoryScreen);
-  // debriefing screen
-  let debriefingScreen = trialBody.displayDebriefingPhase("sizeJudgement");
+  let debriefingScreen = trialBody.displayFeedbackPhase();
   trialLine.push(debriefingScreen);
 
   return trialLine;

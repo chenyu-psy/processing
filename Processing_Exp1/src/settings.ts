@@ -6,23 +6,18 @@ import { random } from "@coglabuzh/webpsy.js";
 
 export const expInfo = {
   // settings for the experiment
-  TITLE: "Filtering Exp 3", // the title of the experiment
+  TITLE: "Processing Exp1", // the title of the experiment
   RESEARCHER: "Chenyu Li", // researcher's name
   EMAIL: "chenyu.li@uzh.ch", // researcher's email
-  DURATION: 35, // duration of the experiment in minutes
+  DURATION: 40, // duration of the experiment in minutes
   LANG: "en", // the language of the experiment
 
   // experiment design
   DESIGN: {
-    nMEMORY_PRE: 3, // number of memory trials in the pre-cue condition
-    nMEMORY_RETRO: 3, // number of memory trials in the retro-cue condition
-    nJUDGE: 3, // number of judgement trials
-    nDUAL: 3, // number of dual-task trials
     nPRACTICE: 2, // number of practice trials
     nTRIALS: 20, // number of experiment trials for each condition
-    PARADIGM: ["sequential", "concurrent"], // paradigms
-    CONDITION: ["pre", "retro"], // conditions
-    SETSIZE: 3, // set size
+    CONDITION: ["Sspan", "Cspan"], // conditions
+    SETSIZE: 4, // set size
     QUESTION: random.sample(["smaller", "larger"], 1)[0], // questions
     RETURN_IMAGES: 12, // number of the trials that the images will not be reused
     INTERVAL: 2, // the interval between the two images
@@ -69,7 +64,7 @@ export const expInfo = {
   },
 
   // Running environment variables
-  RUN_JATOS: true, // a switch to run the experiment on JATOS
+  RUN_JATOS: false, // a switch to run the experiment on JATOS
 };
 
 let maxWidth = Math.min(screen.width, screen.height * expInfo.SIZE.WINDOW_RATIO)

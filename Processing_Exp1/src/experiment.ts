@@ -1,7 +1,7 @@
 /**
- * @title Filtering Project Exp 3
+ * @title Processing Project Exp 1
  * @description In this experiment, we fill the target and distractor with different colors.
- * @version 1.1.0
+ * @version 1.0.0
  *
  * @assets assets/
  */
@@ -28,12 +28,6 @@ import {
   pra_instr_screen,
   exp_start_screen,
 } from "./instructions/InstrStart";
-import { 
-  practice_dual_tasks_line, 
-  practice_judgement_task_line, 
-  practice_memory_task_line, 
-  start_experiment_screen 
-} from "./instructions/practice";
 import { survey_screen } from "./survey/survey";
 import { random } from "@coglabuzh/webpsy.js"
 
@@ -63,76 +57,61 @@ export async function run({
 
   // ********************** Experiment ********************** //
 
-  // shuffle the paradigms
-  random.shuffle(DESIGN.PARADIGM);
-
   // Create an array to store the experiment trials for the retro condition
   let experiment_line: any[] = [];
-
-  experiment_line.push(start_experiment_screen);
-
-  DESIGN.PARADIGM.forEach((paradigm, iParadigm) => {
 
     // shuffle the conditions
     random.shuffle(DESIGN.CONDITION);
 
     DESIGN.CONDITION.forEach((condition, iBlock) => {
 
-      // Instructions before each block
-      let block_instr_screen = createBlockInstruction(
+    // Instructions before each block
+    let block_instr_screen = createBlockInstruction(
+      DESIGN.QUESTION,
+      condition
+    );
+    experiment_line.push(block_instr_screen);
+
+    /*********************** Practice ***********************/
+
+    experiment_line.push(pra_instr_screen);
+
+    for (let iTrial = 0; iTrial < DESIGN.nPRACTICE; iTrial++) {
+
+      let trialLine = createNewTrial(
+        condition,
         DESIGN.QUESTION,
-        paradigm,
-        condition
+        0,
+        iTrial + 1
       );
-      experiment_line.push(block_instr_screen);
 
-      /*********************** Practice ***********************/
+      experiment_line = experiment_line.concat(trialLine);
+    }
 
-      experiment_line.push(pra_instr_screen);
+    /*********************** Experiment ***********************/
 
-      for (let iTrial = 0; iTrial < DESIGN.nPRACTICE; iTrial++) {
+    experiment_line.push(exp_start_screen);
 
-        let trialLine = createNewTrial(
-          paradigm,
-          condition,
-          DESIGN.QUESTION,
-          0,
-          iTrial + 1
-        );
+    for (let iTrial = 0; iTrial < DESIGN.nTRIALS; iTrial++) {
 
-        experiment_line = experiment_line.concat(trialLine);
-      }
-
-
-      /*********************** Experiment ***********************/
-
-      experiment_line.push(exp_start_screen);
-
-      for (let iTrial = 0; iTrial < DESIGN.nTRIALS; iTrial++) {
-
-        let trialLine = createNewTrial(
-          paradigm,
-          condition,
-          DESIGN.QUESTION,
-          iParadigm + iBlock + 1,
-          iTrial + 1
-        );
-        experiment_line = experiment_line.concat(trialLine);
-      }
-    });
+      let trialLine = createNewTrial(
+        condition,
+        DESIGN.QUESTION,
+        iBlock + 1,
+        iTrial + 1
+      );
+      experiment_line = experiment_line.concat(trialLine);
+    }
   });
 
   // Push all the screen slides into timeline
   // When you want to test the experiment, you can easily comment out the screens you don't want
   timeline.push(preload_screen);
   timeline.push(welcome_screen);
-  timeline.push(consent_screen);
-  timeline.push(notice_screen);
-  timeline.push(browser_screen);
-  timeline.push(fullMode_screen);
-  timeline = timeline.concat(practice_memory_task_line);
-  timeline = timeline.concat(practice_judgement_task_line);
-  timeline = timeline.concat(practice_dual_tasks_line);
+  // timeline.push(consent_screen);
+  // timeline.push(notice_screen);
+  // timeline.push(browser_screen);
+  // timeline.push(fullMode_screen);
   timeline = timeline.concat(experiment_line);
   timeline.push(survey_screen);
 
