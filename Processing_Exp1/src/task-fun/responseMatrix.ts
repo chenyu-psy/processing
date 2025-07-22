@@ -25,8 +25,6 @@ export function createButtonMatrix(
     const intervalH = nRow === 1 ? 0 : matrixH / (nRow - 1);
   
     let buttonCSS: string[] = [];
-
-    let bg_width = imageWidth;
   
     for (let i = 0; i < nTotal; i++) {
       let buttonName = `.alter-button${i}-${index}`;
@@ -90,10 +88,9 @@ export function createButtonMatrix(
         "justify-content": "center",
       });
 
-      // buttonCSS.push(`<img class=${className} src=%choice% width=${img.width}px></img>`);
-      buttonCSS.push(`<img class=${className} src=%choice% width=${img.width}px></img>`
+      buttonCSS.push(
+        `<img class=${className} src=%choice% width=${img.width}px></img>`
       );
-
     }
 
     return buttonCSS;
