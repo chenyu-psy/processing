@@ -10,22 +10,34 @@ import { random } from "@coglabuzh/webpsy.js";
  * @param lightness lightness of the colors, range from 0 to 100
  * @returns a list of colors in hex format
  */
-export function generateColors(n: number, saturation: number | number[] = 80, lightness: number | number[] = 50) {
+export function generateColors(
+  n: number,
+  saturation: number | number[] = 80,
+  lightness: number | number[] = 50
+) {
+  const interval = 360 / n;
+  const float = Math.floor(interval / 8);
+  const initialValue = random.randint(0, interval);
 
-    let Input_S: number = Array.isArray(saturation) ? random.randint(saturation[0], saturation[1]) : saturation
-    let Input_L: number = Array.isArray(lightness)
+  const angleList = Array.from(
+    { length: n },
+    (_, i) =>
+      (i * interval + initialValue + random.randint(-float, float) + 360) % 360
+  );
+
+  const colorList = angleList.map((angle) => {
+    // --- SOLUTION ---
+    // Calculate saturation and lightness for EACH color individually.
+    const s = Array.isArray(saturation)
+      ? random.randint(saturation[0], saturation[1])
+      : saturation;
+    const l = Array.isArray(lightness)
       ? random.randint(lightness[0], lightness[1])
       : lightness;
 
-    const interval = 360 / n;
-    const float = Math.floor(interval / 8);
-    const initialValue = random.randint(0, interval);
-    const angleList = Array.from(
-      { length: n },
-      (_, i) => i * interval + initialValue + random.randint(-float, float)
-    );
-    const colorList = angleList.map(angle => hslToHex(angle, Input_S, Input_L));
+    return hslToHex(angle, s, l);
+  });
 
-    return colorList;
-
+  return colorList;
 }
+
